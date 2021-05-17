@@ -7,6 +7,7 @@ using DG.Tweening;
 using UnityEngine.UI;
 using MTFrame.MTEvent;
 using System;
+using Image = UnityEngine.UI.Image;
 
 public class ControlAnimation : MonoBehaviour
 {
@@ -18,20 +19,24 @@ public class ControlAnimation : MonoBehaviour
     public HandModelBase rightHandModel;
 
     private const float rotate_sensitive = 1500f;  //旋转灵敏度
-    private const float displacement_sensitive = 1.5f; //位移灵敏度
+    private const float displacement_sensitive = 0.00004f; //位移灵敏度
     private const float rotate_initial_value = 0f;  //旋转初始位置值
 
-    public Text LogText;
+    public Text LogText,LogText2;
     public Transform Sphere;
 
+    public Image[] images;
+    private int CurrentImage = 0;
+    private bool IsComplete = true;
+    private float TweenTime = 0.5f;
     /// <summary>
     /// 判断条件  
     /// </summary>
     const float smallestVelocity = 0.1f;
-    const float deltaVelocity = /*0.000001f*/0.7f;
+    public float deltaVelocity = 0.7f;
     const float deltaCloseFinger = 0.06f;
 
-    bool IsActive = true;
+   // public RectTransform HandImage;
 
     private void Awake()
     {
@@ -41,45 +46,75 @@ public class ControlAnimation : MonoBehaviour
     void Start()
     {
         provider = FindObjectOfType<LeapProvider>() as LeapProvider;
-        EventManager.AddListener(GenericEventEnumType.Message, "ButtonName", Callback);
+
+        images[CurrentImage].gameObject.GetComponent<RectTransform>().localScale = Vector3.one * 2;
     }
 
-    private void OnDestroy()
-    {
-        EventManager.RemoveListener(GenericEventEnumType.Message, "ButtonName", Callback);
-    }
+    //private void AUpdate(float timeProcess = 0.5f)
+    //{
+    //    //双手同时在
+    //    if (leftHandModel.IsTracked && rightHandModel.IsTracked)
+    //    {
+    //        //Zoom();
+    //        //LogText.text = "双手都在";
+    //        //Position();
+    //        //Scale();
+    //        Scale();
+    //        DisplaySphere();
+    //        return;
 
-    private void Callback(EventParamete parameteData)
-    {
-        string name = parameteData.GetParameter<string>()[0];
-        
-        if(name.Contains("TestButton"))
-        {
-            DisplaySphere();
-            Debug.Log("name==" + name);
-        }
-    }
+    //    }
+
+    //    //双手同时不在
+    //    if (!leftHandModel.IsTracked && !rightHandModel.IsTracked)
+    //    {
+    //        //Debug.Log("双手同时不在");
+    //        LogText.text = "双手都不在";
+    //        //transform.localEulerAngles = Vector3.zero;
+    //        //transform.localScale = new Vector3(1, 1, 1);
+    //    }
+
+    //    if (leftHandModel.IsTracked || rightHandModel.IsTracked)
+    //    {
+    //        //Rotation2();
+    //        //Scale();
+    //        Position();
+
+    //    }
+    //}
+
+
+
+    //private void FllowHandImage()
+    //{
+    //    Frame frame = provider.CurrentFrame;
+    //    foreach (Hand hand in frame.Hands)
+    //    {
+    //        if(hand.IsRight)
+    //        {
+    //            HandImage.position = Camera.main.WorldToScreenPoint(new Vector3(hand.PalmPosition.x, hand.PalmPosition.y, hand.PalmPosition.z));
+    //        }
+    //    }
+            
+    //}
 
     void Update()
     {
-
+        
+        
         //Rotation();
         //Position();
-
-        if (!IsActive)
-        {
-            transform.localEulerAngles = Vector3.zero;
-            transform.localScale = new Vector3(1, 1, 1);
-            return;
-        }
-            
-
         //双手同时在
-        if(leftHandModel.IsTracked && rightHandModel.IsTracked)
+        if (leftHandModel.IsTracked && rightHandModel.IsTracked)
         {
-            Zoom();
-            return;
+            //Zoom();
             //LogText.text = "双手都在";
+            //Position();
+            //Scale();
+
+            //DisplaySphere();
+            return;
+
         }
 
         //双手同时不在
@@ -87,15 +122,19 @@ public class ControlAnimation : MonoBehaviour
         {
             //Debug.Log("双手同时不在");
             LogText.text = "双手都不在";
-            transform.localEulerAngles = Vector3.zero;
-            transform.localScale = new Vector3(1, 1, 1);
+            //transform.localEulerAngles = Vector3.zero;
+            //transform.localScale = new Vector3(1, 1, 1);
         }
 
-        //双手其中有一只手在
-        if (leftHandModel.IsTracked || rightHandModel.IsTracked)
+        if ( rightHandModel.IsTracked)
         {
-            Rotation2();
+            //Rotation2();
+            //Scale();
+            //FllowHandImage();
+            Position();
             Scale();
+            //DisplaySphere();
+            //OnClick();
         }
     }
     /// <summary>
@@ -106,23 +145,31 @@ public class ControlAnimation : MonoBehaviour
         Frame frame = provider.CurrentFrame;
         foreach (Hand hand in frame.Hands)
         {
-            if (isOpenFullHand(hand))
-            {
-                //Debug.Log("大");
-                LogText.text = "五指伸直——变大";
-                Vector3 value = transform.localScale;
-                value += new Vector3(value.x * 0.01f, value.y * 0.01f, value.z * 0.01f);
-                //    Debug.Log(value);
-                transform.localScale = value;
-            }
-            if (isCloseHand(hand))
+            //if (isOpenFullHand(hand))
+            //{
+            //    //Debug.Log("大");
+            //    LogText.text = "五指伸直——变大";
+            //    //Vector3 value = transform.localScale;
+            //    //value += new Vector3(value.x * 0.01f, value.y * 0.01f, value.z * 0.01f);
+            //    ////    Debug.Log(value);
+            //    //transform.localScale = value;
+            //}
+
+            //Hand LeftHand = leftHandModel.GetLeapHand();
+            //Hand RightHand = rightHandModel.GetLeapHand();
+            if (hand.IsRight && isCloseHand(hand))
             {
                 //Debug.Log("小");
-                LogText.text = "五指弯曲(握拳)——变小";
-                Vector3 value = transform.localScale;
-                value -= new Vector3(value.x * 0.01f, value.y * 0.01f, value.z * 0.01f);
-                //   Debug.Log(value);
-                transform.localScale = value;
+                LogText.text = "五指弯曲(握拳)——确定";
+                LogMsg();
+                //if (!Sphere.gameObject.activeSelf)
+                //{
+                //    Sphere.gameObject.SetActive(true);
+                //}
+                //Vector3 value = transform.localScale;
+                //value -= new Vector3(value.x * 0.01f, value.y * 0.01f, value.z * 0.01f);
+                ////   Debug.Log(value);
+                //transform.localScale = value;
             }
         }
     }
@@ -154,33 +201,102 @@ public class ControlAnimation : MonoBehaviour
         Frame frame = provider.CurrentFrame;
         foreach (Hand hand in frame.Hands)
         {
-            if (!hand.IsLeft && hand.IsRight)
+            if (hand.IsLeft)
             {
-                    if (isMoveUp(hand))
-                    {
-                        Vector3 vector3 = new Vector3(0, hand.PalmPosition.y * displacement_sensitive, 0) + transform.localPosition;
-                        transform.DOLocalMove(vector3, time);
-                    }
+                    //if (isMoveUp(hand))
+                    //{
+                    //    Vector3 vector3 = new Vector3(0, hand.PalmPosition.y * displacement_sensitive, 0) + transform.localPosition;
+                    //    //transform.DOLocalMove(vector3, time);
+                    //}
 
-                    if (isMoveDown(hand))
-                    {
-                        Vector3 vector3 = new Vector3(0, -hand.PalmPosition.y * displacement_sensitive, 0) + transform.localPosition;
-                        transform.DOLocalMove(vector3, time);
-                    }
+                    //if (isMoveDown(hand))
+                    //{
+                    //    Vector3 vector3 = new Vector3(0, -hand.PalmPosition.y * displacement_sensitive, 0) + transform.localPosition;
+                    //    //transform.DOLocalMove(vector3, time);
+                        
+                    //}
 
-                    if (isMoveLeft(hand))
-                    {
-                        Vector3 vector3 = new Vector3(hand.PalmPosition.x * displacement_sensitive, 0, 0) + transform.localPosition;
-                        transform.DOLocalMove(vector3, time);
-                    }
-                    if (isMoveRight(hand))
-                    {
-                        Vector3 vector3 = new Vector3(-hand.PalmPosition.x * displacement_sensitive, 0, 0) + transform.localPosition;
-                        transform.DOLocalMove(vector3, time);
-                    }
-                Debug.Log(hand.PalmPosition);
+                    //if (isMoveRight(hand))
+                    //{
+                    //    //Vector3 vector3 = new Vector3(hand.PalmPosition.x * displacement_sensitive, 0, 0) + transform.localPosition;
+                    //    //transform.DOLocalMove(vector3, time);
+                    //    LogText.text = "向左挥手"/*+ HandTimeLeft + "次"*/;
+                    //    MoveImageRight();
+                    //}
+
+                //Debug.Log(hand.PalmPosition);
 
             }
+
+            if(hand.IsRight)
+            {
+                if (isMoveLeft(hand))
+                {
+                    //Vector3 vector3 = new Vector3(-hand.PalmPosition.x * displacement_sensitive, 0, 0) + transform.localPosition;
+                    //transform.DOLocalMove(vector3, time);
+                    LogText.text = "向右挥手" /*+ HandTimeRight + "次"*/;
+                    MoveImageLeft();
+                    
+                }
+
+                if (isMoveRight(hand))
+                {
+                    //Vector3 vector3 = new Vector3(hand.PalmPosition.x * displacement_sensitive, 0, 0) + transform.localPosition;
+                    //transform.DOLocalMove(vector3, time);
+                    LogText.text = "向左挥手"/*+ HandTimeLeft + "次"*/;
+                    MoveImageRight();
+                }
+            }
+        }
+    }
+
+    /// <summary>
+    /// 向左移动
+    /// </summary>
+    private void MoveImageLeft()
+    {
+        if(IsComplete)
+        {
+            //Debug.Log("MoveImageLeft");
+            IsComplete = false;
+            CurrentImage--;
+            if(CurrentImage < 0)
+            {
+                CurrentImage = images.Length - 1;
+            }
+            foreach (var item in images)
+            {
+                item.gameObject.GetComponent<RectTransform>().localScale = Vector3.one;
+            }
+
+            images[CurrentImage].gameObject.GetComponent<RectTransform>().DOScale(Vector3.one * 2, TweenTime).OnComplete(() => {
+                IsComplete = true;
+            });
+        }
+    }
+
+    /// <summary>
+    /// 向右移动
+    /// </summary>
+    private void MoveImageRight()
+    {
+        if (IsComplete)
+        {
+            IsComplete = false;
+            //Debug.Log("MoveImageRight");
+            CurrentImage++;
+            if (CurrentImage > images.Length - 1)
+            {
+                CurrentImage = 0;
+            }
+            foreach (var item in images)
+            {
+                item.gameObject.GetComponent<RectTransform>().localScale = Vector3.one;
+            }
+
+            images[CurrentImage].gameObject.GetComponent<RectTransform>().DOScale(Vector3.one * 2, TweenTime).OnComplete(() => {
+                IsComplete = true;
+            });
         }
     }
 
@@ -191,12 +307,47 @@ public class ControlAnimation : MonoBehaviour
         
     }
 
+    //private void OnClick()
+    //{
+    //    Frame frame = provider.CurrentFrame;
+    //    foreach (Hand hand in frame.Hands)
+    //    {
+    //        if(hand.IsRight && isMoveDown(hand))
+    //        {
+    //            LogMsg();
+    //        }
+    //    }
+    //}
+
+    private void LogMsg()
+    {
+        switch (CurrentImage)
+        {
+            case 0:
+                LogText2.text = "A";
+                break;
+            case 1:
+                LogText2.text = "B";
+                break;
+            case 2:
+                LogText2.text = "C";
+                break;
+            case 3:
+                LogText2.text = "D";
+                break;
+            default:
+                break;
+        }
+    }
+
     protected bool isMoveRight(Hand hand)// 手划向右边
     {
+        //Debug.Log(hand.PalmVelocity);
         return hand.PalmVelocity.x > deltaVelocity && !isStationary(hand);
     }
     protected bool isMoveLeft(Hand hand)   // 手划向左边
     {
+        //Debug.Log(hand.PalmVelocity);
         //x轴移动的速度   deltaVelocity = 0.7f    isStationary (hand)  判断hand是否禁止
         return hand.PalmVelocity.x < -deltaVelocity && !isStationary(hand);
     }
@@ -349,20 +500,14 @@ public class ControlAnimation : MonoBehaviour
         Frame frame = provider.CurrentFrame;
         foreach (Hand hand in frame.Hands)
         {
-            if(hand.IsRight)
+            Hand LeftHand = leftHandModel.GetLeapHand();
+            Hand RightHand = rightHandModel.GetLeapHand();
+            if (JudgeIndexDetector(LeftHand) && JudgeIndexDetector(RightHand))
             {
-                if(JudgeIndexDetector(hand))
+                LogText.text = "伸出食指——返回";
+                if (Sphere.gameObject.activeSelf)
                 {
-                    if(Sphere.gameObject.activeSelf)
-                    {
-                        Sphere.gameObject.SetActive(false);
-                        IsActive = true;
-                    }
-                    else
-                    {
-                        Sphere.gameObject.SetActive(true);
-                        IsActive = false;
-                    }
+                    Sphere.gameObject.SetActive(false);
                 }
             }
         }

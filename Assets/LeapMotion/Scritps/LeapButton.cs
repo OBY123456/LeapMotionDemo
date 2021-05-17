@@ -1,18 +1,34 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using DG.Tweening;
+using UnityEngine.UI;
 
-public class LeapButton : LeapBaseButton
+public class LeapButton : baseOnClick
 {
-    public override void HandEnter()
+    // Start is called before the first frame update
+    void Start()
     {
-        transform.DOScale(vector3, IntervalTime);
         
     }
 
-    public override void HandExit()
+    // Update is called once per frame
+    void Update()
     {
-        transform.DOScale(new Vector3(1,1,1), IntervalTime);
+        
+    }
+
+    public override void OnEnter()
+    {
+        transform.GetChild(0).GetComponent<Text>().text = "进入";
+    }
+
+    public override void OnStay()
+    {
+        transform.GetChild(0).GetComponent<Text>().text = "完成";
+    }
+
+    public override void OnExit()
+    {
+        transform.GetChild(0).GetComponent<Text>().text = "按钮";
     }
 }
